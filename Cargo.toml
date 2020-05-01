@@ -4,8 +4,4 @@ version = "0.1.0"
 authors = ["Brandon Kreisel <BKreisel@users.noreply.github.com>"]
 edition = "2018"
 
-[[bin]]
-name = "cat"
-path = "src/cat/main.rs"
-
 [dependencies]

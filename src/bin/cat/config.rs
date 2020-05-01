@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct Config {
-    pub files: Vec<PathBuf>
+    pub files: Vec<PathBuf>,
 }
 
 impl Config {
@@ -13,14 +13,13 @@ impl Config {
             return Err(());
         }
 
-        let files: Vec::<PathBuf> = args.skip(1)
+        let files: Vec<PathBuf> = args
+            .skip(1)
             .filter(|arg| !arg.starts_with('-'))
             .map(|arg| PathBuf::from(arg))
             .collect();
-       
-        Ok(Config {
-            files
-        })
+
+        Ok(Config { files })
     }
 
     pub fn help() {
@@ -30,4 +29,3 @@ Concatenate FILE(s) to standard output.
         println!("{}", usage);
     }
 }
-
