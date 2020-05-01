@@ -12,15 +12,21 @@ macro_rules! file_err {
 }
 
 fn main() {
-    if let Ok(config) = config::Config::new(env::args()) {
-        for file in config.files {
-            match parse_file(&file) {
-                Ok(contents) => print!("{}", contents.as_str()),
-                Err(e) => eprintln!("cat: {}", e.as_str()),
-            }
+    let config = match config::Config::new(env::args().collect()) {
+        Ok(config) => config,
+        Err(e) => {
+            println!("{}", e);
+            return;
+        }
+    };
+
+    for file in config.files {
+        match parse_file(&file) {
+            Ok(contents) => print!("{}", contents.as_str()),
+            Err(e) => eprintln!("cat: {}", e.as_str()),
         }
     }
-}
+    }
 
 pub fn parse_file(path: &PathBuf) -> Result<String, String> {
     let attrs = match fs::metadata(path) {
@@ -43,13 +49,13 @@ pub fn parse_file(path: &PathBuf) -> Result<String, String> {
 }
 
 #[cfg(test)]
-mod cat_tests {
-    use super::*;
+mod tests {
     use coreutils::test_utils;
+
     #[test]
     fn regular_ascii_file() {
         let path = test_utils::get_path("ascii.txt");
-        let contents = match parse_file(&path) {
+        let contents = match crate::parse_file(&path) {
             Ok(contents) => contents,
             Err(e) => panic!(e),
         };
@@ -59,10 +65,11 @@ mod cat_tests {
     #[test]
     fn binary_file() {
         let path = test_utils::get_path("hello.bin");
-        let contents = match parse_file(&path) {
+        let contents = match crate::parse_file(&path) {
             Ok(contents) => contents,
             Err(e) => panic!(e),
         };
         assert!(contents.contains("Hello"))
     }
 }
+
