@@ -4,6 +4,7 @@ use std::io::Read;
 use std::path::PathBuf;
 
 mod config;
+mod format;
 
 macro_rules! file_err {
     ( $p:expr, $e:expr ) => {
@@ -48,18 +49,20 @@ pub fn parse_file(path: &PathBuf) -> Result<String, String> {
     return Ok(String::from_utf8_lossy(&bytes).to_string());
 }
 
+
 #[cfg(test)]
 mod tests {
     use coreutils::test_utils;
 
     #[test]
     fn regular_ascii_file() {
+
         let path = test_utils::get_path("ascii.txt");
         let contents = match crate::parse_file(&path) {
             Ok(contents) => contents,
             Err(e) => panic!(e),
         };
-        assert_eq!(contents, "The quick brown fox jumps over the lazy dog")
+        assert_eq!(contents, test_utils::ASCII)
     }
 
     #[test]

@@ -131,6 +131,23 @@ mod tests {
     }
 
     #[test]
+    fn number_nonblank_override() {
+        let args = string_vec!["cat.exe", "myfile.txt", "-b", "-n"];
+        let config = config::Config::new(args).unwrap();
+        assert!(config.number_nonblank);
+        assert!(!config.number);
+    }
+
+    #[test]
+    fn number_nonblank_override_long() {
+        let args = string_vec!["cat.exe", "-n", "myfile.txt", "--number-nonblank"];
+        let config = config::Config::new(args).unwrap();
+        assert!(config.number_nonblank);
+        assert!(!config.number);
+    }
+
+
+    #[test]
     fn  e_flag() {
         let args = string_vec!["cat.exe", "myfile.txt", "-e"];
         let config = config::Config::new(args).unwrap();
