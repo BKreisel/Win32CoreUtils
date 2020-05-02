@@ -28,9 +28,69 @@ Concatenate FILE(s) to standard output.
 ";
 
 impl Config {
-    pub fn new(args: Vec<String>) -> Result<Config, &'static str> {
-        if args.len() == 1 {
-            return Err(HELP_TEXT);
+    pub fn new(args: Vec<String>) -> Result<Config, String> {
+        if args.len() == 1 || args.contains(&"--help".to_string()) {
+            return Err(HELP_TEXT.to_string());
+        }
+
+        if args.contains(&"--version".to_string()) {
+            return Err(format!("cat (Win32CoreUtils) v{}", env!("CARGO_PKG_VERSION")));
+        }
+
+        let mut number = false;
+        let mut number_nonblank = false;
+        let mut show_ends = false;
+        let mut squeeze_blank = false;
+        let mut show_tabs = false;
+        let mut show_nonprinting = false;
+
+        let options: Vec<String> = args
+            .iter()
+            .skip(1)
+            .filter(|arg| arg.starts_with("-"))
+            .map(|s| String::from(s))
+            .collect();
+        
+        for option in options {
+            match option.as_str() {
+                "--show-all" =>  {
+                    show_nonprinting = true;
+                    show_ends = true;
+                    show_tabs = true;
+                },
+                "-A" =>  {
+                    show_nonprinting = true;
+                    show_ends = true;
+                    show_tabs = true;
+                },
+                "--number-nonblank" => {
+                    number_nonblank = true;
+                    number = false;
+                }
+                "-b" => {
+                    number_nonblank = true;
+                    number = false;
+                }
+                "-e" => {
+                    show_nonprinting = true;
+                    show_ends = true;
+                }
+                "--show-ends" => show_ends = true,
+                "-E" => show_ends = true,
+                "--number" => if !number_nonblank {number = true},
+                "-n" => if !number_nonblank {number = true},
+                "--squeeze-blank" => squeeze_blank = true,
+                "-s" => squeeze_blank = true,
+                "--show-tabs" => show_tabs = true,
+                "-T" => show_tabs = true,
+                "-t" => {
+                    show_nonprinting = true;
+                    show_tabs = true;
+                }
+                "--show-nonprinting" => show_nonprinting = true,
+                "-v" => show_nonprinting = true,
+                _ => {}
+            }
         }
 
         let files: Vec<PathBuf> = args
@@ -41,13 +101,8 @@ impl Config {
             .collect();
 
         Ok(Config {
-            files,
-            number: false,
-            number_nonblank: false,
-            show_ends: false,
-            squeeze_blank: false,
-            show_tabs: false,
-            show_nonprinting: false   
+            files, number, number_nonblank, show_ends,
+            squeeze_blank, show_tabs, show_nonprinting
         })
     }
 }

@@ -22,10 +22,23 @@ fn main() {
     };
 
     for file in config.files {
-        match parse_file(&file) {
-            Ok(contents) => print!("{}", contents.as_str()),
-            Err(e) => eprintln!("cat: {}", e.as_str()),
-        }
+        let mut contents = match parse_file(&file) {
+            Ok(contents) => contents,
+            Err(e) => {
+                eprintln!("cat: {}", e.as_str());
+                return;
+            },
+        };
+
+        if config.number_nonblank { contents = format::number_nonblank_lines(contents);}
+        if config.number { contents = format::number_lines(contents);}
+        if config.show_ends { contents = format::show_ends(contents);}
+        if config.squeeze_blank { contents = format::squeeze_blank(contents);}
+        if config.show_tabs { contents = format::show_tabs(contents);}
+        if config.show_nonprinting { contents = format::show_nonprinting(contents);}
+
+        println!("{}", contents);
+
     }
     }
 
