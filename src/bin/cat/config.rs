@@ -47,27 +47,18 @@ impl Config {
         let options: Vec<String> = args
             .iter()
             .skip(1)
-            .filter(|arg| arg.starts_with("-"))
-            .map(|s| String::from(s))
+            .filter(|arg| arg.starts_with('-'))
+            .map(String::from)
             .collect();
         
         for option in options {
             match option.as_str() {
-                "--show-all" =>  {
+                "--show-all" | "-A" =>  {
                     show_nonprinting = true;
                     show_ends = true;
                     show_tabs = true;
                 },
-                "-A" =>  {
-                    show_nonprinting = true;
-                    show_ends = true;
-                    show_tabs = true;
-                },
-                "--number-nonblank" => {
-                    number_nonblank = true;
-                    number = false;
-                }
-                "-b" => {
+                "--number-nonblank" | "-b" => {
                     number_nonblank = true;
                     number = false;
                 }
@@ -75,20 +66,15 @@ impl Config {
                     show_nonprinting = true;
                     show_ends = true;
                 }
-                "--show-ends" => show_ends = true,
-                "-E" => show_ends = true,
-                "--number" => if !number_nonblank {number = true},
-                "-n" => if !number_nonblank {number = true},
-                "--squeeze-blank" => squeeze_blank = true,
-                "-s" => squeeze_blank = true,
-                "--show-tabs" => show_tabs = true,
-                "-T" => show_tabs = true,
+                "--show-ends" | "-E" => show_ends = true,
+                "--number" | "-n" => if !number_nonblank {number = true},
+                "--squeeze-blank" | "-s" => squeeze_blank = true,
+                "--show-tabs" | "-T" => show_tabs = true,
                 "-t" => {
                     show_nonprinting = true;
                     show_tabs = true;
                 }
-                "--show-nonprinting" => show_nonprinting = true,
-                "-v" => show_nonprinting = true,
+                "--show-nonprinting" | "-v" => show_nonprinting = true,
                 _ => {}
             }
         }
@@ -97,7 +83,7 @@ impl Config {
             .iter()
             .skip(1)
             .filter(|arg| !arg.starts_with('-'))
-            .map(|arg| PathBuf::from(arg))
+            .map(PathBuf::from)
             .collect();
 
         Ok(Config {

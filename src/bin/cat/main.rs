@@ -59,7 +59,7 @@ pub fn parse_file(path: &PathBuf) -> Result<String, String> {
 
     let bytes: Vec<u8> = file.bytes().filter_map(|bytes| bytes.ok()).collect();
 
-    return Ok(String::from_utf8_lossy(&bytes).to_string());
+    Ok(String::from_utf8_lossy(&bytes).to_string())
 }
 
 

@@ -23,8 +23,7 @@ pub fn number_lines(contents: String) -> String {
 }
 
 pub fn show_ends(contents: String) -> String {
-    let contents = contents.replace("\r\n","$\r\n");
-    contents
+    contents.replace("\r\n","$\r\n")
 }
 
 pub fn squeeze_blank(contents: String) -> String {
@@ -46,8 +45,8 @@ pub fn squeeze_blank(contents: String) -> String {
 }
 
 pub fn show_tabs(contents: String) -> String {
-    let contents = contents.replace("\t","^I");
-    contents
+    contents.replace('\t',"^I")
+    
 }
 
 pub fn show_nonprinting(contents: String) -> String {
