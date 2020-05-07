@@ -37,7 +37,7 @@ fn main() {
         if config.show_tabs { contents = format::show_tabs(contents);}
         if config.show_nonprinting { contents = format::show_nonprinting(contents);}
 
-        println!("{}", contents);
+        print!("{}", contents);
 
     }
     }
