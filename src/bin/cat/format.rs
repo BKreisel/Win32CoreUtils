@@ -4,8 +4,8 @@ pub fn number_nonblank_lines(contents: String) -> String {
     for line in contents.lines() {
         if !line.is_empty() {
             modified.push_str(format!("\t {} {}\r\n", line_num, line).as_str());
-            line_num +=1
-        } else{
+            line_num += 1
+        } else {
             modified.push_str("\r\n");
         }
     }
@@ -16,14 +16,14 @@ pub fn number_lines(contents: String) -> String {
     let mut modified = String::new();
     let mut line_num = 1;
     for line in contents.lines() {
-            modified.push_str(format!("\t {} {}\r\n", line_num, line).as_str());
-            line_num +=1
+        modified.push_str(format!("\t {} {}\r\n", line_num, line).as_str());
+        line_num += 1
     }
     modified
 }
 
 pub fn show_ends(contents: String) -> String {
-    contents.replace("\r\n","$\r\n")
+    contents.replace("\r\n", "$\r\n")
 }
 
 pub fn squeeze_blank(contents: String) -> String {
@@ -45,8 +45,7 @@ pub fn squeeze_blank(contents: String) -> String {
 }
 
 pub fn show_tabs(contents: String) -> String {
-    contents.replace('\t',"^I")
-    
+    contents.replace('\t', "^I")
 }
 
 pub fn show_nonprinting(contents: String) -> String {

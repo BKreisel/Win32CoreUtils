@@ -8,7 +8,7 @@ pub struct Config {
     pub show_ends: bool,
     pub squeeze_blank: bool,
     pub show_tabs: bool,
-    pub show_nonprinting: bool
+    pub show_nonprinting: bool,
 }
 
 const HELP_TEXT: &str = "Usage: cat [OPTION]... [FILE]...
@@ -34,7 +34,10 @@ impl Config {
         }
 
         if args.contains(&"--version".to_string()) {
-            return Err(format!("cat (Win32CoreUtils) v{}", env!("CARGO_PKG_VERSION")));
+            return Err(format!(
+                "cat (Win32CoreUtils) v{}",
+                env!("CARGO_PKG_VERSION")
+            ));
         }
 
         let mut number = false;
@@ -50,14 +53,14 @@ impl Config {
             .filter(|arg| arg.starts_with('-'))
             .map(String::from)
             .collect();
-        
+
         for option in options {
             match option.as_str() {
-                "--show-all" | "-A" =>  {
+                "--show-all" | "-A" => {
                     show_nonprinting = true;
                     show_ends = true;
                     show_tabs = true;
-                },
+                }
                 "--number-nonblank" | "-b" => {
                     number_nonblank = true;
                     number = false;
@@ -67,7 +70,11 @@ impl Config {
                     show_ends = true;
                 }
                 "--show-ends" | "-E" => show_ends = true,
-                "--number" | "-n" => if !number_nonblank {number = true},
+                "--number" | "-n" => {
+                    if !number_nonblank {
+                        number = true
+                    }
+                }
                 "--squeeze-blank" | "-s" => squeeze_blank = true,
                 "--show-tabs" | "-T" => show_tabs = true,
                 "-t" => {
@@ -87,8 +94,13 @@ impl Config {
             .collect();
 
         Ok(Config {
-            files, number, number_nonblank, show_ends,
-            squeeze_blank, show_tabs, show_nonprinting
+            files,
+            number,
+            number_nonblank,
+            show_ends,
+            squeeze_blank,
+            show_tabs,
+            show_nonprinting,
         })
     }
 }
@@ -110,16 +122,17 @@ mod tests {
     #[test]
     fn no_args() {
         let args = string_vec!["cat.exe"];
-        assert!(config::Config::new(args)
-                .unwrap_err()
-                .contains("Usage:"));
+        assert!(config::Config::new(args).unwrap_err().contains("Usage:"));
     }
 
     #[test]
     fn one_file() {
         let args = string_vec!["cat.exe", "myfile.txt"];
         let config = config::Config::new(args).unwrap();
-        assert!(config.files.iter().any(|x| x.to_string_lossy() == "myfile.txt"));
+        assert!(config
+            .files
+            .iter()
+            .any(|x| x.to_string_lossy() == "myfile.txt"));
         assert!(!config.number);
         assert!(!config.number_nonblank);
         assert!(!config.show_ends);
@@ -136,7 +149,6 @@ mod tests {
         assert_eq!(files.len(), 2);
         assert!(files.iter().any(|x| x.to_string_lossy() == "myfile.txt"));
         assert!(files.iter().any(|x| x.to_string_lossy() == "other.txt"));
-
     }
 
     #[test]
@@ -163,7 +175,7 @@ mod tests {
         let config = config::Config::new(args).unwrap();
         assert!(config.number_nonblank);
     }
-    
+
     #[test]
     fn number_nonblank_short() {
         let args = string_vec!["cat.exe", "myfile.txt", "-b"];
@@ -187,9 +199,8 @@ mod tests {
         assert!(!config.number);
     }
 
-
     #[test]
-    fn  e_flag() {
+    fn e_flag() {
         let args = string_vec!["cat.exe", "myfile.txt", "-e"];
         let config = config::Config::new(args).unwrap();
         assert!(config.show_nonprinting);
@@ -277,16 +288,14 @@ mod tests {
     #[test]
     fn help() {
         let args = string_vec!["cat.exe", "myfile.txt", "--help"];
-        assert!(config::Config::new(args)
-            .unwrap_err()
-            .contains("Usage:"));
+        assert!(config::Config::new(args).unwrap_err().contains("Usage:"));
     }
 
     #[test]
     fn version() {
         let args = string_vec!["cat.exe", "myfile.txt", "--version"];
         assert!(config::Config::new(args)
-                .unwrap_err()
-                .contains(env!("CARGO_PKG_VERSION")));
+            .unwrap_err()
+            .contains(env!("CARGO_PKG_VERSION")));
     }
 }
