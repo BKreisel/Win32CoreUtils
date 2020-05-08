@@ -14,13 +14,11 @@ macro_rules! file_err {
 }
 
 fn main() {
-    let config = match config::Config::new(env::args().collect()) {
-        Ok(config) => config,
-        Err(e) => {
-            eprintln!("{}", e);
-            process::exit(1);
-        }
-    };
+    let mut config = config::CatConfig::new();
+    if let Err(e) = config.parse(env::args().collect()) {
+        eprintln!("{}", e);
+        process::exit(1);
+    }
 
     for file in config.files {
         let mut contents = match parse_file(&file) {

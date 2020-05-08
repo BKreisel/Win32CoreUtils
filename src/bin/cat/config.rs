@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
+use coreutils::config::Config;
+
 #[derive(Debug)]
-pub struct Config {
+pub struct CatConfig {
     pub files: Vec<PathBuf>,
     pub number: bool,
     pub number_nonblank: bool,
@@ -27,108 +29,97 @@ Concatenate FILE(s) to standard output.
         --version  output version information and exit
 ";
 
-impl Config {
-    pub fn new(args: Vec<String>) -> Result<Config, String> {
-        if args.len() == 1 || args.contains(&"--help".to_string()) {
-            return Err(HELP_TEXT.to_string());
+impl Config for CatConfig {
+    fn bin_name(&self) -> &'static str {
+        "cat"
+    }
+    fn usage(&self) -> &'static str {
+        &HELP_TEXT
+    }
+}
+
+impl CatConfig {
+    pub fn new() -> CatConfig {
+        CatConfig {
+            files: Vec::new(),
+            number: false,
+            number_nonblank: false,
+            show_ends: false,
+            squeeze_blank: false,
+            show_tabs: false,
+            show_nonprinting: false,
+        }
+    }
+
+    pub fn parse(&mut self, args: Vec<String>) -> Result<(), String> {
+        let base_config = match Config::parse(self, &args) {
+            Ok(config) => config,
+            Err(e) => return Err(e),
+        };
+
+        let mut files: Vec<PathBuf> = base_config.parameters.iter().map(PathBuf::from).collect();
+        self.files.append(&mut files);
+
+        if self.files.is_empty() {
+            return Err(self.usage().to_string());
         }
 
-        if args.contains(&"--version".to_string()) {
-            return Err(format!(
-                "cat (Win32CoreUtils) v{}",
-                env!("CARGO_PKG_VERSION")
-            ));
-        }
-
-        let mut number = false;
-        let mut number_nonblank = false;
-        let mut show_ends = false;
-        let mut squeeze_blank = false;
-        let mut show_tabs = false;
-        let mut show_nonprinting = false;
-
-        let options: Vec<String> = args
-            .iter()
-            .skip(1)
-            .filter(|arg| arg.starts_with('-'))
-            .map(String::from)
-            .collect();
-
-        for option in options {
+        for option in base_config.options {
             match option.as_str() {
                 "--show-all" | "-A" => {
-                    show_nonprinting = true;
-                    show_ends = true;
-                    show_tabs = true;
+                    self.show_nonprinting = true;
+                    self.show_ends = true;
+                    self.show_tabs = true;
                 }
                 "--number-nonblank" | "-b" => {
-                    number_nonblank = true;
-                    number = false;
+                    self.number_nonblank = true;
+                    self.number = false;
                 }
                 "-e" => {
-                    show_nonprinting = true;
-                    show_ends = true;
+                    self.show_nonprinting = true;
+                    self.show_ends = true;
                 }
-                "--show-ends" | "-E" => show_ends = true,
+                "--show-ends" | "-E" => self.show_ends = true,
                 "--number" | "-n" => {
-                    if !number_nonblank {
-                        number = true
+                    if !self.number_nonblank {
+                        self.number = true
                     }
                 }
-                "--squeeze-blank" | "-s" => squeeze_blank = true,
-                "--show-tabs" | "-T" => show_tabs = true,
+                "--squeeze-blank" | "-s" => self.squeeze_blank = true,
+                "--show-tabs" | "-T" => self.show_tabs = true,
                 "-t" => {
-                    show_nonprinting = true;
-                    show_tabs = true;
+                    self.show_nonprinting = true;
+                    self.show_tabs = true;
                 }
-                "--show-nonprinting" | "-v" => show_nonprinting = true,
-                _ => {}
+                "--show-nonprinting" | "-v" => self.show_nonprinting = true,
+                _ => {
+                    return Err(format!(
+                        "invalid option: {}\n Try cat --help for more information",
+                        option
+                    ))
+                }
             }
         }
-
-        let files: Vec<PathBuf> = args
-            .iter()
-            .skip(1)
-            .filter(|arg| !arg.starts_with('-'))
-            .map(PathBuf::from)
-            .collect();
-
-        Ok(Config {
-            files,
-            number,
-            number_nonblank,
-            show_ends,
-            squeeze_blank,
-            show_tabs,
-            show_nonprinting,
-        })
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::config;
-
-    macro_rules! string_vec {
-        ( $( $x:expr ),* ) => {
-            {
-                let mut temp_vec = Vec::new();
-                $(temp_vec.push($x);)*
-                temp_vec.iter().map(|s| s.to_string()).collect()
-            }
-        };
-    }
+    use crate::config::CatConfig;
+    use coreutils::string_vec;
 
     #[test]
     fn no_args() {
         let args = string_vec!["cat.exe"];
-        assert!(config::Config::new(args).unwrap_err().contains("Usage:"));
+        assert!(CatConfig::new().parse(args).unwrap_err().contains("Usage:"));
     }
 
     #[test]
     fn one_file() {
-        let args = string_vec!["cat.exe", "myfile.txt"];
-        let config = config::Config::new(args).unwrap();
+        let mut config = CatConfig::new();
+        config.parse(string_vec!["cat.exe", "myfile.txt"]).unwrap();
+
         assert!(config
             .files
             .iter()
@@ -143,158 +134,176 @@ mod tests {
 
     #[test]
     fn multiple_files() {
-        let args = string_vec!["cat.exe", "myfile.txt", "other.txt"];
-        let files = config::Config::new(args).unwrap().files;
-
-        assert_eq!(files.len(), 2);
-        assert!(files.iter().any(|x| x.to_string_lossy() == "myfile.txt"));
-        assert!(files.iter().any(|x| x.to_string_lossy() == "other.txt"));
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "other.txt"])
+            .unwrap();
+        assert_eq!(config.files.len(), 2);
+        assert!(config
+            .files
+            .iter()
+            .any(|x| x.to_string_lossy() == "myfile.txt"));
+        assert!(config
+            .files
+            .iter()
+            .any(|x| x.to_string_lossy() == "other.txt"));
     }
 
     #[test]
-    fn show_all_long() {
-        let args = string_vec!["cat.exe", "myfile.txt", "--show-all"];
-        let config = config::Config::new(args).unwrap();
+    fn show_all() {
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "--show-all"])
+            .unwrap();
+        assert!(config.show_nonprinting);
+        assert!(config.show_ends);
+        assert!(config.show_tabs);
+
+        config
+            .parse(string_vec!["cat.exe", "-A", "myfile.txt"])
+            .unwrap();
         assert!(config.show_nonprinting);
         assert!(config.show_ends);
         assert!(config.show_tabs);
     }
 
     #[test]
-    fn show_all_short() {
-        let args = string_vec!["cat.exe", "-A", "myfile.txt"];
-        let config = config::Config::new(args).unwrap();
-        assert!(config.show_nonprinting);
-        assert!(config.show_ends);
-        assert!(config.show_tabs);
-    }
-
-    #[test]
-    fn number_nonblank_long() {
-        let args = string_vec!["cat.exe", "myfile.txt", "--number-nonblank"];
-        let config = config::Config::new(args).unwrap();
+    fn number_nonblank() {
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "--number-nonblank"])
+            .unwrap();
         assert!(config.number_nonblank);
-    }
 
-    #[test]
-    fn number_nonblank_short() {
-        let args = string_vec!["cat.exe", "myfile.txt", "-b"];
-        let config = config::Config::new(args).unwrap();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "-b"])
+            .unwrap();
         assert!(config.number_nonblank);
     }
 
     #[test]
     fn number_nonblank_override() {
-        let args = string_vec!["cat.exe", "myfile.txt", "-b", "-n"];
-        let config = config::Config::new(args).unwrap();
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "-b", "-n"])
+            .unwrap();
         assert!(config.number_nonblank);
         assert!(!config.number);
-    }
 
-    #[test]
-    fn number_nonblank_override_long() {
-        let args = string_vec!["cat.exe", "-n", "myfile.txt", "--number-nonblank"];
-        let config = config::Config::new(args).unwrap();
+        config
+            .parse(string_vec![
+                "cat.exe",
+                "-n",
+                "myfile.txt",
+                "--number-nonblank"
+            ])
+            .unwrap();
         assert!(config.number_nonblank);
         assert!(!config.number);
     }
 
     #[test]
     fn e_flag() {
-        let args = string_vec!["cat.exe", "myfile.txt", "-e"];
-        let config = config::Config::new(args).unwrap();
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "-e"])
+            .unwrap();
         assert!(config.show_nonprinting);
         assert!(config.show_ends);
     }
 
     #[test]
-    fn show_ends_long() {
-        let args = string_vec!["cat.exe", "myfile.txt", "--show-ends"];
-        let config = config::Config::new(args).unwrap();
+    fn show_ends() {
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "--show-ends"])
+            .unwrap();
+        assert!(config.show_ends);
+
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "-E"])
+            .unwrap();
         assert!(config.show_ends);
     }
 
     #[test]
-    fn show_ends_short() {
-        let args = string_vec!["cat.exe", "myfile.txt", "-E"];
-        let config = config::Config::new(args).unwrap();
-        assert!(config.show_ends);
-    }
+    fn number() {
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "--number"])
+            .unwrap();
+        assert!(config.number);
 
-    #[test]
-    fn number_long() {
-        let args = string_vec!["cat.exe", "myfile.txt", "--number"];
-        let config = config::Config::new(args).unwrap();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "-n"])
+            .unwrap();
         assert!(config.number);
     }
 
     #[test]
-    fn number_short() {
-        let args = string_vec!["cat.exe", "myfile.txt", "-n"];
-        let config = config::Config::new(args).unwrap();
-        assert!(config.number);
-    }
-
-    #[test]
-    fn squeeze_blank_long() {
-        let args = string_vec!["cat.exe", "myfile.txt", "--squeeze-blank"];
-        let config = config::Config::new(args).unwrap();
+    fn squeeze_blank() {
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "--squeeze-blank"])
+            .unwrap();
         assert!(config.squeeze_blank);
-    }
 
-    #[test]
-    fn squeeze_blank_short() {
-        let args = string_vec!["cat.exe", "myfile.txt", "-s"];
-        let config = config::Config::new(args).unwrap();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "-s"])
+            .unwrap();
         assert!(config.squeeze_blank);
     }
 
     #[test]
     fn t_flag() {
-        let args = string_vec!["cat.exe", "myfile.txt", "-t"];
-        let config = config::Config::new(args).unwrap();
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "-t"])
+            .unwrap();
         assert!(config.show_nonprinting);
         assert!(config.show_tabs);
     }
 
     #[test]
-    fn show_tabs_long() {
-        let args = string_vec!["cat.exe", "myfile.txt", "--show-tabs"];
-        let config = config::Config::new(args).unwrap();
+    fn show_tabs() {
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "--show-tabs"])
+            .unwrap();
+        assert!(config.show_tabs);
+
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "-T"])
+            .unwrap();
         assert!(config.show_tabs);
     }
 
     #[test]
-    fn show_tabs_short() {
-        let args = string_vec!["cat.exe", "myfile.txt", "-T"];
-        let config = config::Config::new(args).unwrap();
-        assert!(config.show_tabs);
-    }
-
-    #[test]
-    fn show_nonprinting_long() {
-        let args = string_vec!["cat.exe", "myfile.txt", "--show-nonprinting"];
-        let config = config::Config::new(args).unwrap();
+    fn show_nonprinting() {
+        let mut config = CatConfig::new();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "--show-nonprinting"])
+            .unwrap();
         assert!(config.show_nonprinting);
-    }
 
-    #[test]
-    fn show_nonprinting_short() {
-        let args = string_vec!["cat.exe", "myfile.txt", "-v"];
-        let config = config::Config::new(args).unwrap();
+        config
+            .parse(string_vec!["cat.exe", "myfile.txt", "-v"])
+            .unwrap();
         assert!(config.show_nonprinting);
     }
 
     #[test]
     fn help() {
-        let args = string_vec!["cat.exe", "myfile.txt", "--help"];
-        assert!(config::Config::new(args).unwrap_err().contains("Usage:"));
+        let mut config = CatConfig::new();
+        let parse_result = config.parse(string_vec!["cat.exe", "myfile.txt", "--help"]);
+        assert!(parse_result.unwrap_err().contains("Usage:"));
     }
 
     #[test]
     fn version() {
-        let args = string_vec!["cat.exe", "myfile.txt", "--version"];
-        assert!(config::Config::new(args)
+        let mut config = CatConfig::new();
+        let parse_result = config.parse(string_vec!["cat.exe", "myfile.txt", "--version"]);
+        assert!(parse_result
             .unwrap_err()
             .contains(env!("CARGO_PKG_VERSION")));
     }
