@@ -5,3 +5,7 @@ authors = ["Brandon Kreisel <BKreisel@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
+chrono = "0.4"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["fileapi", "winbase", "handleapi", "aclapi", "winerror"] }

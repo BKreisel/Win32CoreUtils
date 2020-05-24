@@ -1,13 +1,26 @@
 use std::path::PathBuf;
 
+#[macro_export]
+macro_rules! string_vec {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut temp_vec = Vec::new();
+            $(temp_vec.push($x);)*
+            temp_vec.iter().map(|s| s.to_string()).collect()
+        }
+    };
+}
+
 pub fn get_path(filename: &str) -> PathBuf {
+    let mut path = get_dir();
+    path.push(filename);
+    path
+}
+
+pub fn get_dir() -> PathBuf {
     use std::env;
-
     let mut cwd = env::current_dir().expect("Failed to get working directory");
-
-    cwd.push("src");
-    cwd.push("test_utils");
-    cwd.push(filename);
+    cwd.push("test");
     cwd
 }
 
