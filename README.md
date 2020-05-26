@@ -7,5 +7,4 @@ GNU Coreutils for Windows implemented in Rust.
 |:-------------:|------------- |
 | cat           | complete     |
 | ls            | basic functionality. Flags un-implemented     |
-
-
+| yes           | complete    |

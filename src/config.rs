@@ -39,7 +39,7 @@ pub trait Config {
     }
 
     fn check_help(&self, args: &[String]) -> Option<String> {
-        if args.len() == 1 || args.contains(&"--help".to_string()) {
+        if args.contains(&"--help".to_string()) {
             return Some(self.usage().to_string());
         }
         None
