@@ -1,3 +1,4 @@
+use std::env;
 use std::path::PathBuf;
 
 use coreutils::config::Config;
@@ -22,7 +23,7 @@ pub struct LsConfig {
 const HELP_TEXT: &str = "Usage: ls [OPTION]... [FILE]...
 List information about the FILEs (the current directory by default).
 
-  -a, --all                  do not ignore entries starting with .
+  -a, --all                  no action. hidden files are always shown
   -A, --almost-all           do not list implied . and ..
   -c                         with -t: sort by, and show, creation time.
                                otherwise: show creation time and sort by name;
@@ -80,6 +81,11 @@ impl LsConfig {
         };
 
         let mut paths: Vec<PathBuf> = base_config.parameters.iter().map(PathBuf::from).collect();
+        if paths.len() == 0 {
+            if let Ok(cwd) = env::current_dir() {
+                paths.push(cwd);
+            }
+        }
         self.paths.append(&mut paths);
 
         for option in base_config.options {
